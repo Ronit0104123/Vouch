@@ -12,7 +12,10 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as lib_admin from "../lib/admin.js";
-import type * as waitlist from "../waitlist.js";
+import type * as lib_scoring from "../lib/scoring.js";
+import type * as reviews from "../reviews.js";
+import type * as shareRequests from "../shareRequests.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -25,7 +28,10 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
   "lib/admin": typeof lib_admin;
-  waitlist: typeof waitlist;
+  "lib/scoring": typeof lib_scoring;
+  reviews: typeof reviews;
+  shareRequests: typeof shareRequests;
+  users: typeof users;
 }>;
 
 /**

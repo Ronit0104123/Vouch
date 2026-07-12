@@ -5,6 +5,19 @@ import { v } from "convex/values";
 export default defineSchema({
   ...authTables,
 
+  users: defineTable({
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    role: v.optional(v.string()), // "company" | "employee"
+    companyName: v.optional(v.string()),
+    // Dodo subscription state for company accounts — raw Dodo subscription
+    // status ("active" | "on_hold" | "cancelled" | "failed" | "expired" | "pending").
+    // Access to /review and /r/{email} is gated on this being "active".
+    subscriptionStatus: v.optional(v.string()),
+    dodoSubscriptionId: v.optional(v.string()),
+  }).index("email", ["email"]),
+
   employees: defineTable({
     name: v.string(),
     email: v.string(),
@@ -43,12 +56,9 @@ export default defineSchema({
     employeeEmail: v.string(),
     requestingCompany: v.string(),
     status: v.string(), // "pending" | "approved" | "denied"
-    paid: v.boolean(),
+    // Deprecated: per-record payment gating was replaced by company
+    // subscriptions. Kept optional so pre-existing rows stay valid.
+    paid: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_employeeEmail", ["employeeEmail"]),
-
-  waitlist: defineTable({
-    email: v.string(),
-    createdAt: v.number(),
-  }).index("by_email", ["email"]),
 });

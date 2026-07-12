@@ -30,7 +30,7 @@ function Admin() {
   }
 
   const sections: [string, unknown[]][] = [
-    ["waitlist", overview.waitlist],
+    ["users", overview.users],
     ["employees", overview.employees],
     ["reviews", overview.reviews],
     ["shareRequests", overview.shareRequests],

@@ -1,18 +1,29 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState, type FormEvent } from "react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { useEffect, useState, type FormEvent } from "react";
+import { api } from "../convex/_generated/api";
 
 function Login() {
   const { signIn } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+  const me = useQuery(api.users.me, isAuthenticated ? {} : "skip");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!me) return;
+    if (me.role === "company") {
+      window.location.href = me.subscriptionStatus === "active" ? "/dashboard" : "/start-trial";
+    } else if (me.role === "employee") window.location.href = "/my-record";
+    else window.location.href = "/admin";
+  }, [me]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     try {
       await signIn("password", { email, password, flow: "signIn" });
-      window.location.href = "/admin";
     } catch {
       setError("Invalid email or password.");
     }
@@ -83,6 +94,9 @@ function Login() {
         </button>
       </form>
       {error && <p style={{ color: "var(--danger)", fontSize: "14px" }}>{error}</p>}
+      <p style={{ fontSize: "14px" }}>
+        Don't have an account? <a href="/signup">Sign up</a>
+      </p>
     </main>
   );
 }

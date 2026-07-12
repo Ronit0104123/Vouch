@@ -77,6 +77,19 @@ export const create = mutation({
   },
 });
 
+export const countByCompany = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const user = await ctx.db.get(userId);
+    if (!user || user.role !== "company" || !user.companyName) return null;
+
+    const all = await ctx.db.query("reviews").collect();
+    return all.filter((r) => r.companyName === user.companyName).length;
+  },
+});
+
 export const listByEmployee = query({
   args: {
     employeeEmail: v.string(),

@@ -1,6 +1,8 @@
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useState, type FormEvent } from "react";
 import { api } from "../convex/_generated/api";
+import PageLoader from "./PageLoader";
+import TopBar from "./TopBar";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string;
 
@@ -108,43 +110,54 @@ function Review() {
   }
 
   if (isLoading || (isAuthenticated && me === undefined)) {
-    return <p style={{ padding: 24 }}>Loading...</p>;
+    return <PageLoader />;
   }
 
   if (!isAuthenticated || me?.role !== "company") {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>
-          <a href="/login">Log in</a> with a company account to write a review.
-        </p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>
+            <a href="/login">Log in</a> with a company account to write a review.
+          </p>
+        </main>
+      </>
     );
   }
 
   if (me.subscriptionStatus !== "active") {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>
-          <a href="/start-trial">Start your subscription</a> to write reviews.
-        </p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>
+            <a href="/start-trial">Start your subscription</a> to write reviews.
+          </p>
+        </main>
+      </>
     );
   }
 
   if (status === "done") {
     return (
-      <main style={{ padding: 24, textAlign: "center", display: "flex", flexDirection: "column", gap: 16, alignItems: "center", justifyContent: "center", minHeight: "100%" }}>
-        <h1 style={{ fontSize: "28px" }}>Review saved.</h1>
-        <p>The candidate's record has been updated.</p>
-        <a href={resultLink} style={{ fontSize: "16px" }}>
-          View record →
-        </a>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center", display: "flex", flexDirection: "column", gap: 16, alignItems: "center", justifyContent: "center", minHeight: "calc(100% - 55px)" }}>
+          <h1 style={{ fontSize: "28px" }}>Review saved.</h1>
+          <p>The candidate's record has been updated.</p>
+          <a href={resultLink} style={{ fontSize: "16px" }}>
+            View record →
+          </a>
+        </main>
+      </>
     );
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 640, margin: "0 auto" }}>
+    <>
+      <TopBar />
+      <main style={{ padding: 24, maxWidth: 640, margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: 24 }}>Write a review</h1>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "left" }}>
         <Field label="Developer's email">
@@ -239,7 +252,8 @@ function Review() {
 
         {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       </form>
-    </main>
+      </main>
+    </>
   );
 }
 

@@ -3,5 +3,5 @@ uvicorn[standard]==0.34.0
 python-dotenv==1.0.1
 httpx==0.28.1
 pydantic==2.10.4
-dodopayments==1.108.1
+dodopayments[webhooks]==1.108.1
 convex==0.7.0

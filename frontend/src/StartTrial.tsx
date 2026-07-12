@@ -1,14 +1,21 @@
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../convex/_generated/api";
+import PageLoader from "./PageLoader";
+import TopBar from "./TopBar";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string;
 
+// Temporary: skip the real Dodo checkout so company accounts aren't blocked
+// by payment setup while we focus on the rest of the platform. The Dodo
+// flow below (backend /subscribe + checkout redirect) is left intact —
+// flip this back to false to re-enable it.
+const BYPASS_PAYMENT = true;
+
 function StartTrial() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { signOut } = useAuthActions();
   const me = useQuery(api.users.me, isAuthenticated ? {} : "skip");
+  const startFreeTrial = useMutation(api.users.startFreeTrial);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,30 +28,48 @@ function StartTrial() {
   }, [me]);
 
   if (isLoading || (isAuthenticated && me === undefined)) {
-    return <p style={{ padding: 24 }}>Loading...</p>;
+    return <PageLoader />;
   }
 
   if (!isAuthenticated) {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>
-          Not signed in. <a href="/login">Sign in</a>
-        </p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>
+            Not signed in. <a href="/login">Sign in</a>
+          </p>
+        </main>
+      </>
     );
   }
 
   if (!me || me.role !== "company") {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p style={{ color: "var(--danger)" }}>This page is for company accounts.</p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p style={{ color: "var(--danger)" }}>This page is for company accounts.</p>
+        </main>
+      </>
     );
   }
 
   async function handleStartTrial() {
     setError("");
     setStarting(true);
+
+    if (BYPASS_PAYMENT) {
+      try {
+        await startFreeTrial({});
+        window.location.href = "/dashboard";
+      } catch {
+        setError("Couldn't start trial. Try again.");
+        setStarting(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`${BACKEND_URL}/subscribe`, {
         method: "POST",
@@ -65,28 +90,28 @@ function StartTrial() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        gap: 20,
-        textAlign: "center",
-      }}
-    >
-      <h1 style={{ fontSize: 28 }}>Start your 7-day free trial.</h1>
-      <p style={{ fontSize: 16 }}>$49/month after. Cancel anytime.</p>
-      <button onClick={handleStartTrial} disabled={starting} style={primaryButtonStyle}>
-        {starting ? "Redirecting to checkout..." : "Start Trial"}
-      </button>
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      <button onClick={() => signOut()} style={secondaryButtonStyle}>
-        Sign out
-      </button>
-    </main>
+    <>
+      <TopBar />
+      <main
+        style={{
+          minHeight: "calc(100% - 55px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          gap: 20,
+          textAlign: "center",
+        }}
+      >
+        <h1 style={{ fontSize: 28 }}>Start your 7-day free trial.</h1>
+        <p style={{ fontSize: 16 }}>$49/month after. Cancel anytime.</p>
+        <button onClick={handleStartTrial} disabled={starting} style={primaryButtonStyle}>
+          {starting ? (BYPASS_PAYMENT ? "Starting trial..." : "Redirecting to checkout...") : "Start Trial"}
+        </button>
+        {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      </main>
+    </>
   );
 }
 
@@ -98,15 +123,6 @@ const primaryButtonStyle: React.CSSProperties = {
   color: "#06120c",
   fontWeight: 600,
   fontSize: "15px",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  padding: "8px 16px",
-  borderRadius: "8px",
-  border: "1px solid var(--border)",
-  background: "var(--bg-elevated)",
-  color: "var(--text)",
-  fontSize: "14px",
 };
 
 export default StartTrial;

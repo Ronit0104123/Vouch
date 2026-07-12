@@ -2,6 +2,8 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import PageLoader from "./PageLoader";
+import TopBar from "./TopBar";
 
 function getEmailFromPath(): string {
   const parts = window.location.pathname.split("/").filter(Boolean); // ["r", "<email>"]
@@ -46,43 +48,54 @@ function Record() {
   }
 
   if (isLoading || (isAuthenticated && me === undefined)) {
-    return <p style={{ padding: 24 }}>Loading...</p>;
+    return <PageLoader />;
   }
 
   if (!isAuthenticated || me?.role !== "company") {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>
-          <a href="/login">Log in</a> with a company account to view records.
-        </p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>
+            <a href="/login">Log in</a> with a company account to view records.
+          </p>
+        </main>
+      </>
     );
   }
 
   if (me.subscriptionStatus !== "active") {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>
-          <a href="/start-trial">Start your subscription</a> to view records.
-        </p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>
+            <a href="/start-trial">Start your subscription</a> to view records.
+          </p>
+        </main>
+      </>
     );
   }
 
-  if (data === undefined) return <p style={{ padding: 24 }}>Loading...</p>;
+  if (data === undefined) return <PageLoader />;
 
   if (data === null) {
     return (
-      <main style={{ padding: 24, textAlign: "center" }}>
-        <p>No record found for {employeeEmail}.</p>
-      </main>
+      <>
+        <TopBar />
+        <main style={{ padding: 24, textAlign: "center" }}>
+          <p>No record found for {employeeEmail}.</p>
+        </main>
+      </>
     );
   }
 
   const { employee, avgVouchScore, reviewCount, unlocked, reviews } = data;
 
   return (
-    <main style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
+    <>
+      <TopBar />
+      <main style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 32 }}>
         <ScoreGauge score={avgVouchScore} />
         <div style={{ textAlign: "left" }}>
@@ -172,7 +185,8 @@ function Record() {
           {actionError && <p style={{ color: "var(--danger)", marginTop: 8 }}>{actionError}</p>}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

@@ -44,6 +44,25 @@ export const get = query({
   },
 });
 
+export const listForCompany = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const user = await ctx.db.get(userId);
+    if (!user || user.role !== "company" || !user.companyName) return null;
+
+    const all = await ctx.db.query("shareRequests").order("desc").collect();
+    const requests = all.filter((r) => r.requestingCompany === user.companyName);
+
+    return {
+      requests,
+      pendingCount: requests.filter((r) => r.status === "pending").length,
+      approvedCount: requests.filter((r) => r.status === "approved").length,
+    };
+  },
+});
+
 export const listForEmployee = query({
   args: {},
   handler: async (ctx) => {

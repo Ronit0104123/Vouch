@@ -1,7 +1,24 @@
-import { action, internalMutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+
+// Temporary bypass of the Dodo checkout flow so company accounts can get
+// past the paywall while we focus on the rest of the platform. Real Dodo
+// checkout logic (backend /subscribe, webhook handling) is untouched —
+// swap StartTrial.tsx's BYPASS_PAYMENT flag back to false to re-enable it.
+export const startFreeTrial = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not signed in");
+    const user = await ctx.db.get(userId);
+    if (!user || user.role !== "company") {
+      throw new Error("Only company accounts can start a trial");
+    }
+    await ctx.db.patch(userId, { subscriptionStatus: "active" });
+  },
+});
 
 export const me = query({
   args: {},

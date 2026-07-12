@@ -31,8 +31,42 @@ body,
 }
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(1100px 560px at 15% -10%, rgba(110, 231, 183, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(110, 231, 183, 0.04), transparent 55%),
+    var(--bg);
   color: var(--text);
+}
+
+button,
+a.btn {
+  transition: filter 0.15s ease, transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+button:hover:not(:disabled),
+a.btn:hover {
+  filter: brightness(1.1);
+}
+
+button:active:not(:disabled),
+a.btn:active {
+  transform: translateY(1px);
+}
+
+.panel-hover {
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.panel-hover:hover {
+  border-color: var(--accent-dim);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes vouch-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 h1,

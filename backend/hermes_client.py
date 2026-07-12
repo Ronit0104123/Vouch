@@ -1,6 +1,8 @@
 import json
+import os
 import re
-import subprocess
+
+import httpx
 
 STRUCTURE_PROMPT = """You are a structured review extractor. Given a manager's free-text comment about a
 developer, return ONLY valid JSON:
@@ -24,16 +26,22 @@ def _extract_json(text: str) -> dict:
 
 def structure_review(raw_comment: str) -> dict:
     prompt = STRUCTURE_PROMPT.format(comment=raw_comment)
-    result = subprocess.run(
-        ["hermes", "-z", prompt],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"hermes oneshot failed: {result.stderr.strip()}")
+    model = os.environ.get("OPENAI_MODEL", "gpt-5.6-sol")
 
-    data = _extract_json(result.stdout)
+    response = httpx.post(
+        "https://api.openai.com/v1/chat/completions",
+        headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+        json={
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    content = response.json()["choices"][0]["message"]["content"]
+
+    data = _extract_json(content)
 
     ratings = data["ratings"]
     for key in ("technical", "ownership", "collaboration", "delivery", "communication", "growth"):

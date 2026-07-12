@@ -1,0 +1,26 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Convex
+frontend/.convex/
+
+# Env files
+.env
+.env.local
+**/.env
+**/.env.local
+!.env.example
+!**/.env.example
+
+# OS
+.DS_Store
+
+# Logs
+*.log

@@ -1,8 +1,7 @@
 import json
 import os
 import re
-
-import httpx
+import subprocess
 
 STRUCTURE_PROMPT = """You are a structured review extractor. Given a manager's free-text comment about a
 developer, return ONLY valid JSON:
@@ -15,6 +14,12 @@ Manager's comment:
 \"\"\"{comment}\"\"\"
 """
 
+# "openai-api" is Hermes Agent's provider id for a plain OpenAI API key (as
+# opposed to an OAuth-backed subscription provider) — it resolves the key
+# straight from the OPENAI_API_KEY env var, so this runs non-interactively
+# with no ~/.hermes login/config needed on a fresh container.
+HERMES_PROVIDER = "openai-api"
+
 
 def _extract_json(text: str) -> dict:
     text = text.strip()
@@ -26,22 +31,18 @@ def _extract_json(text: str) -> dict:
 
 def structure_review(raw_comment: str) -> dict:
     prompt = STRUCTURE_PROMPT.format(comment=raw_comment)
-    model = os.environ.get("OPENAI_MODEL", "gpt-5.6-sol")
+    model = os.environ.get("HERMES_MODEL", "gpt-5.6-sol")
 
-    response = httpx.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
-        json={
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "response_format": {"type": "json_object"},
-        },
-        timeout=30,
+    result = subprocess.run(
+        ["hermes", "-z", prompt, "--provider", HERMES_PROVIDER, "-m", model],
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
-    response.raise_for_status()
-    content = response.json()["choices"][0]["message"]["content"]
+    if result.returncode != 0:
+        raise RuntimeError(f"hermes oneshot failed: {result.stderr.strip()}")
 
-    data = _extract_json(content)
+    data = _extract_json(result.stdout)
 
     ratings = data["ratings"]
     for key in ("technical", "ownership", "collaboration", "delivery", "communication", "growth"):
